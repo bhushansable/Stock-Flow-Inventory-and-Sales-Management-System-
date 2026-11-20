@@ -12,39 +12,141 @@ cursor = conn.cursor()
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS user(
                 id INTEGER PRIMARY KEY,
-                name VANCHAR(50) NOT NULL,
+                name VARCHAR(50) NOT NULL,
                 email TEXT NOT NULL,
                 password TEXT NOT NULL
                 )
                  ''')
+
+
+def register_user(name,email,password):
+
+    with sqlite3.connect(DB) as conn :
+         cursor = conn.cursor()
+         
+         cursor.execute(''' 
+                   INSERT INTO user
+                   VALUES (?,?,?)
+                   ''',(name,email,password)
+                   )
+
+         conn.commit()
+
+
+def verify_user(email,password):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute(''' 
+                        SELECT email , password FROM user
+                        WHERE email = ? AND password = ?
+                        ''',(email,password)
+                        )
+
+          result = cursor.fetchone()
+
+          if result:
+               return result[0]
+
+          else:
+               None
+
+
+
 # supplier table
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS supplier(
                 id INTEGER PRIMARY KEY,
-                name VANCHAR(50) NOT NULL,
+                name VARCHAR(50) NOT NULL,
                 email TEXT NOT NULL,
-                address VANCHAR(100),
+                address VARCHAR(100),
                 phone_no TEXT NOT NULL
                 )
                  ''')
+
+
+def add_supplier(name,email,address,phone_no):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO supplier 
+                        VALUES (?,?,?,?)
+                         ''',(name,email,address,phone_no)
+                         )
+
+          conn.commit()      
+
+
+def get_supplier():
+
+     with sqlite3.connect(DB) as conn :
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        SELECT * FROM supplier
+                         ''')
+
+          result = cursor.fetchall()
+
+          if result:
+               return result
+
+          else:
+               None
+
+     
 
 # customer table
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS customer(
                 id INTEGER PRIMARY KEY,
-                sales_item_id INTEGER,
-                name VANCHAR(50) NOT NULL,
-                address VANCHAR(100),
-                phone_no TEXT NOT NULL,
-                FOREIGN KEY ( sales_item_id) REFERENCES sales_item(id)
+                name VARCHAR(50) NOT NULL,
+                address VARCHAR(100),
+                phone_no TEXT NOT NULL
                 )
                  ''')
+
+
+def add_customer(name,address,phone_no):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute( ''' 
+                        INSERT INTO customer
+                        VALUES (?,?,?)
+                        ''',(name,address,phone_no)
+                        )
+
+          conn.commit()
+
+
+def get_customer():
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute(''' 
+                        SELECT * FROM customer                      
+                         ''')
+
+          result = cursor.fetchall()
+
+          if result:
+               return result
+
+          else:
+               None
+
 
 # product table
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS product(
                 id INTEGER PRIMARY KEY,
-                product_name VANCHAR(50),
+                product_name VARCHAR(50),
                 price INTEGER NOT NULL,
                 qty INTEGER ,
                 selling_price INTEGER,
@@ -54,14 +156,76 @@ cursor.execute('''
                 )
                  ''')
 
+def add_product(name,price,qty,selling_price,buying_price,categoreies_id):
+      
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                            INSERT INTO product
+                            VALUES (?,?,?,?,?,?)
+                                 ''',(name,price,selling_price,buying_price,categoreies_id)
+                            )
+
+               conn.commit()
+     
+
+def get_product():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM product    
+                             ''')
+
+               result = cursor.fetchall()
+
+               if result:
+                     return result
+
+               else:
+                     None
+     
+
 # categories table
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS categories(
                 id INTEGER PRIMARY KEY,
-                categories_name VANCHAR(50)
+                categories_name VARCHAR(50)
                 )
                  ''')
 
+def add_categories(name):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO categories
+                        VALUES (?)
+                         ''',(name))
+
+          conn.commit()
+
+def get_categories():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM categories      
+                             ''')
+
+               result = cursor.fetchall()
+
+               if result:
+                    return result
+
+               else:
+                    None
+
+     
 
 # purchases table
 cursor.execute('''
@@ -74,6 +238,32 @@ cursor.execute('''
                 FOREIGN KEY (  supplier_id ) REFERENCES supplier(id)
                 )
                  ''')
+
+def add_purchases(user_id,supplier_id,total_amount):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO purchases
+                        VALUES (?,?,?)
+                         ''',(user_id,supplier_id,total_amount)
+                         )
+
+          conn.commit()
+
+def get_purchases():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM purchases      
+                             ''')
+
+               return cursor.fetchall()
+
+
 
 # purchases_item table
 cursor.execute('''
@@ -89,6 +279,32 @@ cursor.execute('''
                 )
                  ''')
 
+def add_purchases_item(purchases_id,product_id,qty,unit_cost):
+
+     sub_total = qty* unit_cost
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO purchases_item
+                        VALUES (?,?,?,?,?)
+                         ''',(purchases_id,product_id,qty,unit_cost,sub_total)
+                         )
+
+          conn.commit()
+
+def get_purchases_item():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM purchases_item   
+                             ''')
+
+               return cursor.fetchall()
+
 # sales table
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sales(
@@ -101,6 +317,30 @@ cursor.execute('''
                 FOREIGN KEY (customer_id) REFERENCES customer(id)
                 )
                  ''')
+
+def add_sales(user_id,customer_id , payment_method, total_amount):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO sales
+                        VALUES (?,?,?,?)
+                         ''',(user_id,customer_id,payment_method,total_amount)
+                         )
+
+          conn.commit()
+
+def get_sales():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM sales   
+                             ''')
+               
+               return cursor.fetchall()
 
 # sales_item
 cursor.execute('''
@@ -116,6 +356,34 @@ cursor.execute('''
                 )
                  ''')
 
+def add_sales_item(sales_id,product_id,qty,unit_cost,sub_total):
+
+     sub_total = qty* unit_cost
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO sales_item
+                        VALUES (?,?,?,?,?)
+                         ''',(sales_id,product_id,qty,unit_cost,sub_total)
+                         )
+
+          conn.commit()
+
+def get_sales_item():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM sales_item   
+                             ''')
+               
+               return cursor.fetchall()
+
+            
+
 # stock momvent
 cursor.execute('''
                 CREATE TABLE IF NOT EXISTS stock_moment(
@@ -124,6 +392,7 @@ cursor.execute('''
                 sales_id INTEGER,
                 product_id INTEGER,
                 movement_type TEXT ,
+                qty INTEGER
                 FOREIGN KEY  (purchases_id) REFERENCES purchases(id),
                 FOREIGN KEY (sales_id) REFERENCES sales(id),         
                 FOREIGN KEY  (product_id) REFERENCES product(id)
@@ -131,7 +400,37 @@ cursor.execute('''
                 )
                  ''')
 
+def add_stock_movement(purchases_id,sales_id,product_id,movement_type,qty):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                        INSERT INTO stock_moment
+                        VALUES (?,?,?,?,?)
+                         ''',(purchases_id,sales_id,product_id,movement_type,qty)
+                         )
+
+          conn.commit()
+
+def get_stock_movement():
+
+      with sqlite3.connect(DB) as conn:
+               cursor = conn.cursor()
+
+               cursor.execute('''
+                             SELECT * FROM stock_moment  
+                             ''')
+
+               return cursor.fetchall()
+
+           
+
 
 conn.commit()
 
 
+
+
+
+ 
