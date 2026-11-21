@@ -25,7 +25,7 @@ def register_user(name,email,password):
          cursor = conn.cursor()
          
          cursor.execute(''' 
-                   INSERT INTO user
+                   INSERT INTO user (name, email, password)
                    VALUES (?,?,?)
                    ''',(name,email,password)
                    )
@@ -61,7 +61,7 @@ cursor.execute('''
                 name VARCHAR(50) NOT NULL,
                 email TEXT NOT NULL,
                 address VARCHAR(100),
-                phone_no TEXT NOT NULL
+                phone_no INTEGER NOT NULL
                 )
                  ''')
 
@@ -72,7 +72,7 @@ def add_supplier(name,email,address,phone_no):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO supplier 
+                        INSERT INTO supplier (name,email,address,phone_no)
                         VALUES (?,?,?,?)
                          ''',(name,email,address,phone_no)
                          )
@@ -116,7 +116,7 @@ def add_customer(name,address,phone_no):
           cursor = conn.cursor()
 
           cursor.execute( ''' 
-                        INSERT INTO customer
+                        INSERT INTO customer (name,address,phone_no)
                         VALUES (?,?,?)
                         ''',(name,address,phone_no)
                         )
@@ -162,7 +162,7 @@ def add_product(name,price,qty,selling_price,buying_price,categoreies_id):
                cursor = conn.cursor()
 
                cursor.execute('''
-                            INSERT INTO product
+                            INSERT INTO product (name,price,qty,selling_price,buying_price,categoreies_id)
                             VALUES (?,?,?,?,?,?)
                                  ''',(name,price,selling_price,buying_price,categoreies_id)
                             )
@@ -202,7 +202,7 @@ def add_categories(name):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO categories
+                        INSERT INTO categories (name)
                         VALUES (?)
                          ''',(name))
 
@@ -245,7 +245,7 @@ def add_purchases(user_id,supplier_id,total_amount):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO purchases
+                        INSERT INTO purchases (user_id,supplier_id,total_amount)
                         VALUES (?,?,?)
                          ''',(user_id,supplier_id,total_amount)
                          )
@@ -287,7 +287,7 @@ def add_purchases_item(purchases_id,product_id,qty,unit_cost):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO purchases_item
+                        INSERT INTO purchases_item (purchases_id,product_id,qty,unit_cost)
                         VALUES (?,?,?,?,?)
                          ''',(purchases_id,product_id,qty,unit_cost,sub_total)
                          )
@@ -324,7 +324,7 @@ def add_sales(user_id,customer_id , payment_method, total_amount):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO sales
+                        INSERT INTO sales (user_id,customer_id , payment_method, total_amount)
                         VALUES (?,?,?,?)
                          ''',(user_id,customer_id,payment_method,total_amount)
                          )
@@ -364,7 +364,7 @@ def add_sales_item(sales_id,product_id,qty,unit_cost,sub_total):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO sales_item
+                        INSERT INTO sales_item (sales_id,product_id,qty,unit_cost,sub_total)
                         VALUES (?,?,?,?,?)
                          ''',(sales_id,product_id,qty,unit_cost,sub_total)
                          )
@@ -392,7 +392,7 @@ cursor.execute('''
                 sales_id INTEGER,
                 product_id INTEGER,
                 movement_type TEXT ,
-                qty INTEGER
+                qty INTEGER,
                 FOREIGN KEY  (purchases_id) REFERENCES purchases(id),
                 FOREIGN KEY (sales_id) REFERENCES sales(id),         
                 FOREIGN KEY  (product_id) REFERENCES product(id)
@@ -406,7 +406,7 @@ def add_stock_movement(purchases_id,sales_id,product_id,movement_type,qty):
           cursor = conn.cursor()
 
           cursor.execute('''
-                        INSERT INTO stock_moment
+                        INSERT INTO stock_moment (purchases_id,sales_id,product_id,movement_type,qty)
                         VALUES (?,?,?,?,?)
                          ''',(purchases_id,sales_id,product_id,movement_type,qty)
                          )
