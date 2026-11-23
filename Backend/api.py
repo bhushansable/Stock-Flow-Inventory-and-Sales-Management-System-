@@ -1,5 +1,5 @@
 
-from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_purchases ,get_purchases ,add_purchases_item,get_purchases_item ,add_sales, get_sales ,add_sales_item ,get_sales_item ,add_stock_movement ,get_stock_movement ,add_supplier ,get_supplier
+from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_supplier ,get_supplier
 from fastapi import FastAPI,HTTPException 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -31,9 +31,12 @@ def register(user : Register):
         "register successfull"
     }
 
+
+
 class Login(BaseModel):
     email : str
     password : str
+
 
 @app.post("/login")
 def login(user : Login):
@@ -42,9 +45,7 @@ def login(user : Login):
         user.password
     )
 
-   return{
-       "detiles" : detiles
-   }
+   return detiles
 
 
 class Supplier(BaseModel):
@@ -70,11 +71,100 @@ def supplider(user:Supplier):
 def view_supplier():
     deitells = get_supplier()
 
+    return deitells
+
+
+class  Customer(BaseModel):
+
+    name : str
+    address : str
+    phone_no : int
+
+
+@app.post("/customer")
+def customer(user:Customer):
+    add_customer(
+        user.name,
+        user.address,
+        user.phone_no
+    )
+
     return{
-        "deitells":{
-            deitells[0]
-         
-        }
-      
+        "customer add successfuly"
     }
-    
+
+@app.get("/view_customer")
+def view_customer():
+    deitells = get_customer()
+
+   
+    return deitells
+     
+
+
+
+class Product(BaseModel):
+    product_name: str
+    price: int
+    qty: int
+    selling_price: int
+    buying_price: int
+    categories_id: int
+
+@app.post("/product")
+def product(user:Product):
+     add_product(
+         user.product_name,
+         user.price,
+         user.qty,
+         user.selling_price,
+         user.buying_price,
+         user.categories_id
+    )
+
+     return{
+         "product add successfuly"
+     }
+
+  
+
+@app.get("/get_product")
+def view_product():
+    result = get_product()
+
+    products = []
+
+    for row in result:
+        products.append({
+            "id": row[0],
+            "product_name": row[1],
+            "price": row[2],
+            "qty": row[3],
+            "selling_price": row[4],
+            "buying_price": row[5],
+            "category_name": row[6]
+        })
+
+    return products
+
+
+class Categories(BaseModel):
+    categories_name : str
+
+@app.post("/categories")
+def categories(user : Categories):
+    add_categories(
+        user.categories_name
+    )
+
+    return{
+        "add succesfully"
+    }
+
+
+@app.get("/get_categories")
+def get__categories():
+    deitels =  get_categories()
+
+    return deitels
+                
