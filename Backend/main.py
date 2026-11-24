@@ -323,6 +323,85 @@ def view_purchase_item():
 
 
 
+# sales iteam
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sales_item(
+        id INTEGER PRIMARY KEY,
+        customer_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        sale_date TEXT DEFAULT (DATE('now')),
+        qty INTEGER NOT NULL CHECK(qty > 0),
+        unit_cost INTEGER NOT NULL CHECK(unit_cost >= 0),
+        sub_total INTEGER NOT NULL,
+        
+
+        FOREIGN KEY (customer_id) REFERENCES customer(id),
+        FOREIGN KEY (product_id) REFERENCES product(id)
+)
+""")
+
+
+def sales_item(customer_id ,product_id,sale_date,qty,unit_cost):
+
+     sub_total = qty * unit_cost
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+
+
+          cursor.execute(''' 
+                          UPDATE product
+                          SET qty = qty - ?
+                          WHERE id = ?
+                          AND qty >= ?
+                            ''',(qty,product_id,qty))
+
+          
+
+          if cursor.rowcount == 0:
+               raise ValueError("stock is over")
+          
+
+          cursor.execute(''' 
+                         INSERT INTO sales_item(customer_id ,product_id,sale_date,qty,unit_cost,sub_total)
+                          VALUES (?,?,?,?,?,?)
+                         ''',(customer_id ,product_id,sale_date,qty,unit_cost,sub_total)
+                         )
+
+
+
+
+def view_sales_item():
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+          cursor.execute('''
+                    SELECT
+                          sales_item.id,
+                          customer.name,
+                          customer.address,
+                          customer.phone_no,
+                          product.product_name,
+                          sales_item.sale_date,
+                          sales_item.qty,
+                          sales_item.unit_cost,
+                          sales_item.sub_total
+
+                    FROM sales_item
+                    JOIN customer
+                    ON sales_item.customer_id = customer.id
+
+                    JOIN product
+                    ON sales_item.product_id= product.id
+
+
+                          ''')
+
+          return cursor.fetchall()
+
+
 
 
      

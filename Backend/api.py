@@ -1,5 +1,5 @@
 
-from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_supplier ,get_supplier ,purchase_item ,view_purchase_item
+from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_supplier ,get_supplier ,purchase_item ,view_purchase_item ,sales_item , view_sales_item
 from fastapi import FastAPI,HTTPException 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -71,7 +71,18 @@ def supplider(user:Supplier):
 def view_supplier():
     deitells = get_supplier()
 
-    return deitells
+    result = []
+
+    for row in deitells:
+            result.append({
+                "id": row[0],
+                "name" : row[1],
+                "email" : row[2],
+                "address" : row[3],
+                "phone no" : row[4]
+            })
+
+    return result
 
 
 class  Customer(BaseModel):
@@ -97,8 +108,18 @@ def customer(user:Customer):
 def view_customer():
     deitells = get_customer()
 
+    result = []
+
    
-    return deitells
+    for row in deitells:
+            result.append({
+                "id": row[0],
+                "name" : row[1],
+                "address" : row[2],
+                "phone no" : row[3]
+            })
+
+    return result
      
 
 
@@ -166,7 +187,15 @@ def categories(user : Categories):
 def get__categories():
     deitels =  get_categories()
 
-    return deitels
+    result = []
+
+    for row in deitels:
+        result.append({
+            "id": row[0],
+            "categories" : row[1]
+        })
+
+    return result
 
 
 class Purchase_item(BaseModel):
@@ -209,7 +238,51 @@ def get_purchase_item():
               "subtotal": row[6]
         })
 
-        return product
+    return product
 
+
+class Sales_iteam(BaseModel):
+    customer_id : int
+    product_id : int 
+    sale_date : str 
+    qty: int 
+    unit_cost : int 
+
+@app.post("/sales_item")
+def add_sales_item(user : Sales_iteam):
+    sales_item(
+        user.customer_id,
+        user.product_id,
+        user.sale_date,
+        user.qty,
+        user.unit_cost
+    )
+
+    return{
+        "add succesfully "
+    }
+
+
+@app.get("/sales_item")
+
+def get_sales_item():
+    reuslt = view_sales_item()
+
+    product = []
+
+    for row in reuslt:
+        product.append({
+              "sales_id": row[0],
+              "customer name ": row[1],
+              "customer address":row[2],
+              "customer phone no ":row[3],
+              "product": row[4],
+              "sale_date": row[5],
+              "quantity": row[6],
+              "unit_cost": row[7],
+              "subtotal": row[8]
+        })
+
+    return product
     
 
