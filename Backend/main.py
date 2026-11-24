@@ -8,11 +8,6 @@ conn = sqlite3.connect(DB)
 cursor = conn.cursor()
 
 
-cursor.execute("DROP TABLE IF EXISTS purchases_item")
-cursor.execute("DROP TABLE IF EXISTS purchases")
-cursor.execute("DROP TABLE IF EXISTS sales_item")
-cursor.execute("DROP TABLE IF EXISTS sales")
-cursor.execute("DROP TABLE IF EXISTS stock_moment")
 
 conn.commit()
 
@@ -252,6 +247,83 @@ def get_categories():
 
                else:
                     None
+
+
+# purchase_item
+
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS purchase_item(
+        id INTEGER PRIMARY KEY,
+        supplier_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        purchase_date TEXT DEFAULT (DATE('now')),
+        qty INTEGER NOT NULL CHECK(qty > 0),
+        unit_cost INTEGER NOT NULL CHECK(unit_cost >= 0),
+        sub_total INTEGER NOT NULL,
+        
+
+        FOREIGN KEY (supplier_id) REFERENCES supplier(id),
+        FOREIGN KEY (product_id) REFERENCES product(id)
+)
+""")
+
+
+def purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost):
+
+     sub_total = qty * unit_cost
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute(''' 
+                         INSERT INTO purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost,sub_total)
+                          VALUES (?,?,?,?,?,?)
+                         ''',(supplier_id ,product_id,purchase_date,qty,unit_cost,sub_total)
+                         )
+
+          cursor.execute(''' 
+                        UPDATE product
+                        SET qty = qty + ?
+                        WHERE id = ?
+                          ''',(qty,product_id))
+          
+          cursor.execute(''' 
+                          UPDATE product
+                          SET buying_price = ?
+                          WHERE id = ?
+                            ''',(unit_cost,product_id))
+
+
+
+def view_purchase_item():
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+          cursor.execute('''
+                    SELECT
+                          purchase_item.id,
+                          supplier.name,
+                          product.product_name,
+                          purchase_item.purchase_date,
+                          purchase_item.qty,
+                          purchase_item.unit_cost,
+                          purchase_item.sub_total
+
+                    FROM purchase_item
+                    JOIN supplier
+                    ON purchase_item.supplier_id = supplier.id
+
+                    JOIN product
+                    ON purchase_item.product_id= product.id
+
+
+                          ''')
+
+          return cursor.fetchall()
+
+
+
+
 
      
 

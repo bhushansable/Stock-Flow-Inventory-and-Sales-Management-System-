@@ -1,5 +1,5 @@
 
-from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_supplier ,get_supplier
+from Backend.main import register_user , verify_user , add_categories ,get_categories , add_customer ,get_customer ,add_product ,get_product ,add_supplier ,get_supplier ,purchase_item ,view_purchase_item
 from fastapi import FastAPI,HTTPException 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -167,4 +167,49 @@ def get__categories():
     deitels =  get_categories()
 
     return deitels
-                
+
+
+class Purchase_item(BaseModel):
+    supplier_id : int
+    product_id : int 
+    purchase_date : str 
+    qty: int 
+    unit_cost : int 
+
+@app.post("/purchase_item")
+def add_purchase_item(user : Purchase_item):
+    purchase_item(
+        user.supplier_id,
+        user.product_id,
+        user.purchase_date,
+        user.qty,
+        user.unit_cost
+    )
+
+    return{
+        "add succesfully "
+    }
+
+
+@app.get("/purchase_item")
+
+def get_purchase_item():
+    reuslt = view_purchase_item()
+
+    product = []
+
+    for row in reuslt:
+        product.append({
+              "purchase_id": row[0],
+              "supplier": row[1],
+              "product": row[2],
+              "purchase_date": row[3],
+              "quantity": row[4],
+              "unit_cost": row[5],
+              "subtotal": row[6]
+        })
+
+        return product
+
+    
+
