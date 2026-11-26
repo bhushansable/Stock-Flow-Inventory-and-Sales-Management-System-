@@ -1,4 +1,19 @@
 
+# import sqlite3
+
+# DB = "inventory_sales_data.db"
+
+# with sqlite3.connect(DB) as conn:
+#     cursor = conn.cursor()
+
+#     cursor.execute("SELECT * FROM purchase_item")
+
+#     re = cursor.fetchall()
+
+#     print(re)
+
+
+
 import sqlite3
 
 DB = 'inventory_sales_data.db'
@@ -92,13 +107,22 @@ def get_supplier():
                         SELECT * FROM supplier
                          ''')
 
-          result = cursor.fetchall()
+          return cursor.fetchall()
 
-          if result:
-               return result
+         
 
-          else:
-               None
+
+def delete_supplier(supplier_id):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM supplier
+                         WHERE id = ?
+                          ''',(supplier_id,)
+                          )
+     
 
      
 
@@ -136,13 +160,20 @@ def get_customer():
                         SELECT * FROM customer                      
                          ''')
 
-          result = cursor.fetchall()
+          return cursor.fetchall()
 
-          if result:
-               return result
+               
 
-          else:
-               None
+def delete_customer(customer_id):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM customer
+                         WHERE id = ?
+                          ''',(customer_id,)
+                          )
 
 
 # product table
@@ -207,8 +238,20 @@ def get_product():
            ON product.categories_id = categories.id
         """)
 
-        result = cursor.fetchall()
-        return result
+        return cursor.fetchall()
+
+
+def delete_product(product_id):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM product
+                         WHERE id = ?
+                          ''',(product_id,)
+                          )
+     
      
 
 # categories table
@@ -240,22 +283,48 @@ def get_categories():
                              SELECT * FROM categories      
                              ''')
 
-               result = cursor.fetchall()
-
-               if result:
-                    return result
-
-               else:
-                    None
+               return cursor.fetchall()
 
 
-# purchase_item
+
+def delete_categories(categories_id):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM categories  
+                         WHERE id = ?
+                          ''',(categories_id,)
+                          )
+
+
+#purchase_item
+
+
+# cursor.execute("""
+#     CREATE TABLE IF NOT EXISTS purchase_item(
+#         id INTEGER PRIMARY KEY,
+#         supplier_id INTEGER NOT NULL,
+#         product_id INTEGER NOT NULL,
+#         purchase_date TEXT DEFAULT (DATE('now')),
+#         qty INTEGER NOT NULL CHECK(qty > 0),
+#         unit_cost INTEGER NOT NULL CHECK(unit_cost >= 0),
+#         sub_total INTEGER NOT NULL,
+        
+
+#         FOREIGN KEY (supplier_id) REFERENCES supplier(id),
+#         FOREIGN KEY (product_id) REFERENCES product(id)
+# )
+# """)
+
+
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS purchase_item(
         id INTEGER PRIMARY KEY,
-        supplier_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
+        supplier_id INTEGER,
+        product_id INTEGER ,
         purchase_date TEXT DEFAULT (DATE('now')),
         qty INTEGER NOT NULL CHECK(qty > 0),
         unit_cost INTEGER NOT NULL CHECK(unit_cost >= 0),
@@ -268,12 +337,54 @@ cursor.execute("""
 """)
 
 
-def purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost):
+def purchase_item(name,email,address,phone_no,categories_name,product_name,price ,purchase_date,qty,unit_cost):
 
      sub_total = qty * unit_cost
 
      with sqlite3.connect(DB) as conn:
           cursor = conn.cursor()
+
+          cursor.execute('''
+                          INSERT INTO supplier (name,email,address,phone_no)
+                          VALUES (?,?,?,?)
+                          ''',(name,email,address,phone_no)
+                            )
+
+          cursor.execute("""
+                          SELECT id FROM supplier
+                           WHERE name = ?
+                         """, (name,))
+
+          supplier_id = cursor.fetchone()
+          supplier_id = supplier_id[0]
+
+          cursor.execute('''
+                         INSERT INTO categories (categories_name)
+                          VALUES (?)
+                            ''',(categories_name,))
+          
+
+          cursor.execute("""
+                          SELECT id FROM categories
+                           WHERE categories_name = ?
+                         """, (categories_name,))
+
+          categories_id = cursor.fetchone()
+          categories_id = categories_id[0]
+
+          cursor.execute('''
+                      INSERT INTO product(product_name,price,categories_id )
+                      VALUES (?,?,?)''', (product_name,price,categories_id)
+                      )
+          
+
+          cursor.execute("""
+                          SELECT id FROM product
+                           WHERE product_name = ?
+                         """, (product_name,))
+
+          product_id = cursor.fetchone()
+          product_id = product_id[0]
 
           cursor.execute(''' 
                          INSERT INTO purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost,sub_total)
@@ -283,15 +394,26 @@ def purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost):
 
           cursor.execute(''' 
                         UPDATE product
-                        SET qty = qty + ?
+                        SET qty = ?
                         WHERE id = ?
                           ''',(qty,product_id))
           
+
           cursor.execute(''' 
                           UPDATE product
                           SET buying_price = ?
                           WHERE id = ?
-                            ''',(unit_cost,product_id))
+                            ''',(sub_total,product_id))
+
+          cursor.execute(''' 
+                        UPDATE product
+                        SET  selling_price = 5 + ?
+                        WHERE id = ?
+                          ''',(unit_cost,product_id)
+                          )
+
+          conn.commit()
+         
 
 
 
@@ -322,8 +444,17 @@ def view_purchase_item():
           return cursor.fetchall()
 
 
+def delete_purchase_item(purchase_item_id):
 
-# sales iteam
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM purchase_item  
+                         WHERE id = ?
+                          ''',(purchase_item_id,)
+                          )
+          
 
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS sales_item(
@@ -340,6 +471,8 @@ cursor.execute("""
         FOREIGN KEY (product_id) REFERENCES product(id)
 )
 """)
+
+
 
 
 def sales_item(customer_id ,product_id,sale_date,qty,unit_cost):
@@ -400,6 +533,18 @@ def view_sales_item():
                           ''')
 
           return cursor.fetchall()
+
+
+def delete_sales_item(sales_item_id):
+
+     with sqlite3.connect(DB) as conn:
+          cursor = conn.cursor()
+
+          cursor.execute('''
+                         DELETE  FROM sales_item  
+                         WHERE id = ?
+                          ''',(sales_item_id,)
+                          )
 
 
 
