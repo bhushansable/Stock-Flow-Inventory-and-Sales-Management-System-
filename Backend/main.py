@@ -302,24 +302,6 @@ def delete_categories(categories_id):
 #purchase_item
 
 
-# cursor.execute("""
-#     CREATE TABLE IF NOT EXISTS purchase_item(
-#         id INTEGER PRIMARY KEY,
-#         supplier_id INTEGER NOT NULL,
-#         product_id INTEGER NOT NULL,
-#         purchase_date TEXT DEFAULT (DATE('now')),
-#         qty INTEGER NOT NULL CHECK(qty > 0),
-#         unit_cost INTEGER NOT NULL CHECK(unit_cost >= 0),
-#         sub_total INTEGER NOT NULL,
-        
-
-#         FOREIGN KEY (supplier_id) REFERENCES supplier(id),
-#         FOREIGN KEY (product_id) REFERENCES product(id)
-# )
-# """)
-
-
-
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS purchase_item(
         id INTEGER PRIMARY KEY,
@@ -344,61 +326,81 @@ def purchase_item(name,email,address,phone_no,categories_name,product_name,price
      with sqlite3.connect(DB) as conn:
           cursor = conn.cursor()
 
-          cursor.execute('''
-                          INSERT INTO supplier (name,email,address,phone_no)
-                          VALUES (?,?,?,?)
-                          ''',(name,email,address,phone_no)
-                            )
-
           cursor.execute("""
-                          SELECT id FROM supplier
-                           WHERE name = ?
-                         """, (name,))
+                         SELECT id FROM supplier
+                         WHERE name = ?
+                        """, (name,))
 
-          supplier_id = cursor.fetchone()
-          supplier_id = supplier_id[0]
+          supplier_data = cursor.fetchone()
 
-          cursor.execute('''
-                         INSERT INTO categories (categories_name)
-                          VALUES (?)
-                            ''',(categories_name,))
-          
+          if supplier_data:
+               supplier_id = supplier_data[0]
+
+          else:
+                cursor.execute("""
+                               INSERT INTO supplier (name, email, address, phone_no)
+                               VALUES (?,?,?,?)
+                          """, (name, email, address, phone_no))
+
+                supplier_id = cursor.lastrowid
+
+
 
           cursor.execute("""
                           SELECT id FROM categories
                            WHERE categories_name = ?
                          """, (categories_name,))
 
-          categories_id = cursor.fetchone()
-          categories_id = categories_id[0]
+          categories_data = cursor.fetchone()
 
-          cursor.execute('''
-                      INSERT INTO product(product_name,price,categories_id )
-                      VALUES (?,?,?)''', (product_name,price,categories_id)
-                      )
+          if categories_data:
+               categories_id = categories_data[0]
+
+          else:
+               cursor.execute('''
+                         INSERT INTO categories (categories_name)
+                          VALUES (?)
+                            ''',(categories_name,))
+
+               categories_id = cursor.lastrowid
           
+
 
           cursor.execute("""
                           SELECT id FROM product
                            WHERE product_name = ?
                          """, (product_name,))
 
-          product_id = cursor.fetchone()
-          product_id = product_id[0]
+          product_data = cursor.fetchone()
+
+          if product_data:
+
+               product_id = product_data[0]
+
+               cursor.execute(''' 
+                        UPDATE product
+                        SET qty = qty + ?
+                        WHERE id = ?
+                          ''',(qty,product_id))
+               
+
+               
+          else:
+               cursor.execute('''
+                      INSERT INTO product(product_name,price,qty,categories_id )
+                      VALUES (?,?,?,?)''', (product_name,price,qty,categories_id)
+                      )
+
+               product_id = cursor.lastrowid
+
+
 
           cursor.execute(''' 
                          INSERT INTO purchase_item(supplier_id ,product_id,purchase_date,qty,unit_cost,sub_total)
                           VALUES (?,?,?,?,?,?)
                          ''',(supplier_id ,product_id,purchase_date,qty,unit_cost,sub_total)
                          )
-
-          cursor.execute(''' 
-                        UPDATE product
-                        SET qty = ?
-                        WHERE id = ?
-                          ''',(qty,product_id))
           
-
           cursor.execute(''' 
                           UPDATE product
                           SET buying_price = ?
@@ -475,27 +477,61 @@ cursor.execute("""
 
 
 
-def sales_item(customer_id ,product_id,sale_date,qty,unit_cost):
+def sales_item(name,address,phone_no,product_name,sale_date,qty):
 
-     sub_total = qty * unit_cost
+     if qty <= 0:
+       return "Quantity must be greater than 0"
+     
 
      with sqlite3.connect(DB) as conn:
           cursor = conn.cursor()
 
+          cursor.execute("""
+                         SELECT id FROM customer
+                         WHERE name = ?
+                        """, (name,))
+
+          customer_data = cursor.fetchone()
+
+          if customer_data:
+               customer_id = customer_data[0]
+
+          else:
+                cursor.execute("""
+                               INSERT INTO customer (name, address, phone_no)
+                               VALUES (?,?,?)
+                          """, (name,  address, phone_no))
+
+                customer_id = cursor.lastrowid
 
 
-          cursor.execute(''' 
-                          UPDATE product
-                          SET qty = qty - ?
-                          WHERE id = ?
-                          AND qty >= ?
-                            ''',(qty,product_id,qty))
+          cursor.execute("""
+                          SELECT id,qty,selling_price FROM product
+                           WHERE product_name = ?
+                         """, (product_name,))
 
-          
+          product_data = cursor.fetchone()
 
-          if cursor.rowcount == 0:
-               raise ValueError("stock is over")
-          
+          if not product_data:
+            return "This product is not available"
+
+          product_id = product_data[0]
+          available_qty = product_data[1]
+          selling_price_ = product_data[2]
+
+        # Check stock
+          if available_qty < qty:
+            return f"Insufficient stock. Available quantity: {available_qty}"
+
+        # Deduct stock
+          cursor.execute("""
+            UPDATE product
+            SET qty = qty - ?
+            WHERE id = ?
+        """, (qty, product_id))
+
+          unit_cost = selling_price_
+          sub_total = qty * unit_cost
 
           cursor.execute(''' 
                          INSERT INTO sales_item(customer_id ,product_id,sale_date,qty,unit_cost,sub_total)

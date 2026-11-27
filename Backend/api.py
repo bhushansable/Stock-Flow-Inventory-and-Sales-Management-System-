@@ -336,24 +336,26 @@ def purchase_item_delete(purchase_item_id : int):
 
 
 class Sales_iteam(BaseModel):
-    customer_id : int
-    product_id : int 
-    sale_date : str 
-    qty: int 
-    unit_cost : int 
+     name : str 
+     address : str 
+     phone_no : int 
+     product_name : str 
+     sale_date : str 
+     qty : int 
 
 @app.post("/sales_item")
 def add_sales_item(user : Sales_iteam):
-    sales_item(
-        user.customer_id,
-        user.product_id,
-        user.sale_date,
-        user.qty,
-        user.unit_cost
+   result = sales_item(
+         user.name,
+         user.address,
+         user.phone_no,
+         user.product_name,
+         user.sale_date,
+         user.qty
     )
 
-    return{
-        "add succesfully "
+   return{
+        "message":result
     }
 
 
